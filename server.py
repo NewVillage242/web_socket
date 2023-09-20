@@ -2,52 +2,51 @@
 import socket
 import threading
 
-HEADER = 64
-PORT = 9999
-# SERVER = ""
-# Another way to get the local IP address automatically
-SERVER = "0.0.0.0"
-print(SERVER)
-print(socket.gethostname())
+SERVER, PORT= "0.0.0.0", 9999
 ADDR = (SERVER, PORT)
 FORMAT = 'UTF-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-def handle_client(conn, addr, count):
+def handle_read(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
-    while dic[count]:
+    while True:
         msg = conn.recv(1024).decode(FORMAT)
         print(msg)
         if "bye" in msg:
-            dic[count] = False
-
+            break
     conn.close()
 
-
-def handle_write(conn, addr, count):
-    #conn.send(bytes(count, FORMAT))
-    while dic[count]:
+# server -> client
+# [#num] string_to_send
+def handle_write():
+    while True:
         msg = input("Server > ")
-        conn.send(bytes(msg, FORMAT))
-    conn.cloes()
+        num, *_ = msg.split(" ")
+        num = int(num)
+        if num is 0:
+            break
+        msg = " ".join(_)
+        dic[num].send(bytes(msg, FORMAT))
+    server.close()
+    print("Server close")
+    
 dic = {}
 def start():
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
     count = 0
+    thread_write = threading.Thread(target=handle_write)
+    thread_write.start()
     while True:
         conn, addr = server.accept()
         count += 1
-        dic[count] = True
-        thread_read = threading.Thread(target=handle_client, args=(conn, addr, count))
-        thread_write= threading.Thread(target=handle_write, args=(conn,addr, count))
+        dic[count] = conn
+        thread_read = threading.Thread(target=handle_read, args=(conn, addr))
         thread_read.start()
-        thread_write.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
