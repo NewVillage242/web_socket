@@ -27,7 +27,7 @@ def handle_write():
         msg = input("Server > ")
         num, *_ = msg.split(" ")
         num = int(num)
-        if num is 0:
+        if num == 0:
             break
         msg = " ".join(_)
         dic[num].send(bytes(msg, FORMAT))
